@@ -19,14 +19,21 @@ const routes = [
     path: '/lights/{lightId}',
     method: 'POST',
     handler: async (req, h) => {
-      let action = req.payload.action;
       let lightId = req.params.lightId;
 
-      if (action === 'toggle') {
-        if (lightId == 'global') {
-          globalOn = !globalOn;
-        }
-        return await Tradfri.toggleLight(lightId, globalOn);
+      let action = req.payload.action;
+      let brightness = req.payload.brightness;
+
+      switch (action) {
+        case 'toggle':
+          if (lightId == 'global') {
+            globalOn = !globalOn;
+          }
+          return await Tradfri.toggleLight(lightId, globalOn);
+        case 'setBrightness':
+          return await Tradfri.setBrightness(lightId, brightness);
+        default:
+          return false;
       }
     }
   },

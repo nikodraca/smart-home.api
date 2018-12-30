@@ -82,6 +82,20 @@ Tradfri.toggleLight = async (lightId, globalOn) => {
   }
 };
 
+Tradfri.setBrightness = async (lightId, brightness) => {
+  let light;
+  try {
+    light = Tradfri.lightbulbs[lightId].lightList[0];
+    await light.setBrightness(brightness);
+    light.dimmer = brightness;
+
+    console.log(light);
+    return light;
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 Tradfri.getLight = async lightId => {
   let lightRef = Tradfri.lightbulbs[lightId];
 
