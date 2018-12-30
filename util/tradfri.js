@@ -1,6 +1,7 @@
 const tradfriClient = require('node-tradfri-client');
 const AccessoryTypes = tradfriClient.AccessoryTypes,
   Accessory = tradfriClient.Accessory;
+const keys = require('lodash/keys');
 
 const securityCode = 'fuWczqlFOaf7hBra';
 var config = {};
@@ -49,10 +50,20 @@ Tradfri.tradfriInit = async () => {
     .observeDevices();
 };
 
-Tradfri.toggleLight = async lightId => {
+Tradfri.toggleLight = async (lightId, globalOn) => {
   try {
-    let light = Tradfri.lightbulbs[lightId].lightList[0];
-    await light.toggle();
+    console.log(lightId, globalOn);
+    if (lightId === 'global') {
+      keys(Tradfri.lightbulbs).forEach(async l => {
+        let light = Tradfri.lightbulbs[l].lightList[0];
+
+        // if not matching global status
+        if (light.onOff != globalOn) await light.toggle();
+      });
+    } else {
+      let light = Tradfri.lightbulbs[lightId].lightList[0];
+      await light.toggle();
+    }
   } catch (err) {
     console.log(err);
   }

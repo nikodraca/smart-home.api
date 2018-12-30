@@ -1,4 +1,6 @@
 const Tradfri = require('../util/tradfri');
+const mapKeys = require('lodash/mapKeys');
+const pick = require('lodash/pick');
 
 // manually map names to lights
 const lightMapping = {
@@ -9,6 +11,9 @@ const lightMapping = {
   '65557': 'Entry Way'
 };
 
+// global on or off
+let globalOn = false;
+
 const routes = [
   {
     path: '/lights/{lightId}',
@@ -18,17 +23,52 @@ const routes = [
       let lightId = req.params.lightId;
 
       if (action === 'toggle') {
-        Tradfri.toggleLight(lightId);
+        if (lightId == 'global') globalOn = !globalOn;
+        Tradfri.toggleLight(lightId, globalOn);
       }
 
-      return action;
+      return { [action]: true };
     }
   },
   {
     path: '/lights',
     method: 'GET',
     handler: async (req, h) => {
-      return Tradfri.lightbulbs;
+      let res = [];
+
+      mapKeys(Tradfri.lightbulbs, (value, key) => {
+        // create light structure
+        let light = {
+          instanceId: key,
+          name: lightMapping[key],
+          alive: value.alive,
+          ...pick(value.lightList[0], [
+            'onOff',
+            'dimmer',
+            'color',
+            'colorTemperature',
+            'colorX',
+            'colorY',
+            'transitionTime'
+          ])
+        };
+
+        // check global status
+        if (light.onOff) globalOn = true;
+
+        // append to results
+        res.push(light);
+      });
+
+      // append global
+      res.push({
+        instanceId: 'global',
+        name: 'Global',
+        alive: true,
+        onOff: globalOn
+      });
+
+      return res;
     }
   },
   {
@@ -37,6 +77,17 @@ const routes = [
     handler: async (req, h) => {
       let lightId = req.params.lightId;
       return Tradfri.lightbulbs[lightId];
+    }
+  },
+  {
+    path: '/lights/health',
+    method: 'GET',
+    handler: async (req, h) => {
+      try {
+        return { health: true };
+      } catch (err) {
+        return err;
+      }
     }
   }
 ];
