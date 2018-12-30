@@ -2,8 +2,19 @@ const tradfriClient = require('node-tradfri-client');
 const AccessoryTypes = tradfriClient.AccessoryTypes,
   Accessory = tradfriClient.Accessory;
 const keys = require('lodash/keys');
+const pick = require('lodash/pick');
 
 const securityCode = 'fuWczqlFOaf7hBra';
+
+// manually map names to lights
+const lightMapping = {
+  '65553': 'Bedroom',
+  '65554': 'Living Room',
+  '65555': 'Dining Room',
+  '65556': 'Kitchen',
+  '65557': 'Entry Way'
+};
+
 var config = {};
 
 let Tradfri = (module.exports = {});
@@ -51,20 +62,41 @@ Tradfri.tradfriInit = async () => {
 };
 
 Tradfri.toggleLight = async (lightId, globalOn) => {
+  let light;
   try {
-    console.log(lightId, globalOn);
     if (lightId === 'global') {
       keys(Tradfri.lightbulbs).forEach(async l => {
-        let light = Tradfri.lightbulbs[l].lightList[0];
-
+        light = Tradfri.lightbulbs[l].lightList[0];
         // if not matching global status
         if (light.onOff != globalOn) await light.toggle();
       });
     } else {
-      let light = Tradfri.lightbulbs[lightId].lightList[0];
+      light = Tradfri.lightbulbs[lightId].lightList[0];
       await light.toggle();
+      light.onOff = !light.onOff;
     }
+
+    return light;
   } catch (err) {
     console.log(err);
   }
+};
+
+Tradfri.getLight = async lightId => {
+  let lightRef = Tradfri.lightbulbs[lightId];
+
+  return {
+    instanceId: lightId,
+    name: lightMapping[lightId],
+    alive: lightRef.alive,
+    ...pick(lightRef.lightList[0], [
+      'onOff',
+      'dimmer',
+      'color',
+      'colorTemperature',
+      'colorX',
+      'colorY',
+      'transitionTime'
+    ])
+  };
 };

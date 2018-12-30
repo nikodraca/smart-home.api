@@ -23,11 +23,11 @@ const routes = [
       let lightId = req.params.lightId;
 
       if (action === 'toggle') {
-        if (lightId == 'global') globalOn = !globalOn;
-        Tradfri.toggleLight(lightId, globalOn);
+        if (lightId == 'global') {
+          globalOn = !globalOn;
+        }
+        return await Tradfri.toggleLight(lightId, globalOn);
       }
-
-      return { [action]: true };
     }
   },
   {
@@ -76,7 +76,7 @@ const routes = [
     method: 'GET',
     handler: async (req, h) => {
       let lightId = req.params.lightId;
-      return Tradfri.lightbulbs[lightId];
+      return await Tradfri.getLight(lightId);
     }
   },
   {
